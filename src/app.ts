@@ -19,6 +19,8 @@ import { isAdmin } from './middleware/isAdmin';
 import userRoutes from './routes/user.routes';
 import favoriteRoutes from './routes/favorite.routes';
 import reviewRoutes from './routes/review.routes';
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
 
 
 
@@ -26,6 +28,11 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+const swaggerDocument = YAML.load('./openapi.yaml');
+
+
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(cors());
 app.use(express.json());
