@@ -99,6 +99,7 @@ export const submitReview = async (req: Request, res: Response): Promise<void> =
       rating,
       comment,
     });
+    await updateHotelAverageRating(hotelId);
 
     res.status(201).json({ message: 'Review submitted', review });
   } catch (err) {
@@ -192,11 +193,17 @@ export const deleteReview = async (req: Request, res: Response): Promise<void> =
 
 const updateHotelAverageRating = async (hotelId: string): Promise<void> => {
   const reviews = await Review.find({ hotel: hotelId });
-  const avgRating = reviews.length
-    ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+  const numReviews = reviews.length;
+  const avgRating = numReviews
+    ? reviews.reduce((sum, r) => sum + r.rating, 0) / numReviews
     : 0;
-  await Hotel.findByIdAndUpdate(hotelId, { averageRating: avgRating });
+
+  await Hotel.findByIdAndUpdate(hotelId, {
+    averageRating: avgRating,
+    numReviews: numReviews, // ✅ 加上這個
+  });
 };
+
 
 
 

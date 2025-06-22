@@ -9,6 +9,8 @@ export interface IHotel extends Document {
   type?: string;
   starRating?: number; 
   imageUrl?:string;
+   averageRating?: number;
+   numReviews?: number;
 }
 
 const HotelSchema: Schema<IHotel> = new Schema({
@@ -18,7 +20,9 @@ const HotelSchema: Schema<IHotel> = new Schema({
   amenities: [{ type: String }],
   type: { type: String },
   starRating: { type: Number },
-  imageUrl: { type: String }
+  imageUrl: { type: String },
+  averageRating: { type: Number, default: 0 },  
+  numReviews: { type: Number, default: 0 }, 
 });
 
 export default mongoose.model<IHotel>('Hotel', HotelSchema);
