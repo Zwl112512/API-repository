@@ -49,8 +49,61 @@ router.delete('/hotels/:id', verifyToken, requireAdmin, async (req, res) => {
   }
   res.json({ message: 'Hotel and related bookings deleted' });
 });
+router.get('/reviews', verifyToken, requireAdmin, getAllReviewsForAdmin);
+router.get('/reviews/stats', verifyToken, requireAdmin, getReviewStats);
 
-router.get('/reviews', verifyToken, requireAdmin, getAllReviewsForAdmin, getReviewStats);
+
+
+// ✅ PUT 更新單筆訂單（修改入住日期、旅客數）
+router.put('/bookings/:id', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const booking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      {
+        checkIn: req.body.checkIn,
+        checkOut: req.body.checkOut,
+        guests: req.body.guests,
+      },
+      { new: true }
+    ).populate('user hotel');
+
+    if (!booking) {
+       res.status(404).json({ message: 'Booking not found' });
+    }
+
+    res.json({ message: 'Booking updated', booking });
+  } catch (err) {
+    console.error('Update booking error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ✅ DELETE 刪除單筆訂單
+router.delete('/bookings/:id', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const deleted = await Booking.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+       res.status(404).json({ message: 'Booking not found' });
+    }
+    res.json({ message: 'Booking deleted' });
+  } catch (err) {
+    console.error('Delete booking error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+// ✅ GET 所有使用者（用於管理者查看 user 列表）
+router.get('/users', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const users = await User.find().select('-password'); // 不傳回密碼
+    res.json({ users });
+  } catch (err) {
+    console.error('Fetch users error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 
 
 export default router;

@@ -1,8 +1,12 @@
 import { Schema, model, Document, Types } from 'mongoose';
 
+// 擴充：user 不只是 ObjectId，也可能是 populate 出來的 user 物件（含 username）
 export interface IReview extends Document {
   hotel: Types.ObjectId;
-  user: Types.ObjectId;
+  user: Types.ObjectId | {
+    _id: Types.ObjectId;
+    username: string;
+  };
   rating: number;
   comment: string;
   createdAt: Date;

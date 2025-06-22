@@ -2,14 +2,14 @@ import { Request, Response } from 'express';
 import Hotel from '../models/Hotel';
 import Review from '../models/Review';
 
-// GET /hotels?page=1&limit=10&search=grand&type=resort&minStars=4
 export const getHotels = async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+    const limit = parseInt(req.query.limit as string) || 9;
     const search = (req.query.search as string) || '';
     const type = req.query.type as string;
     const minStars = parseInt(req.query.minStars as string);
+    const location = req.query.location as string;
 
     const query: any = {};
 
@@ -24,8 +24,12 @@ export const getHotels = async (req: Request, res: Response) => {
       query.type = type;
     }
 
+if (location) {
+  query.location = location;
+}
+
     if (!isNaN(minStars)) {
-      query.starRating = { $gte: minStars };
+      query.starRating = minStars;
     }
 
     const totalItems = await Hotel.countDocuments(query);
@@ -39,6 +43,9 @@ export const getHotels = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Server error', error });
   }
 };
+
+
+// ✅ 新增飯店
 export const createHotel = async (req: Request, res: Response) => {
   try {
     const {
@@ -48,7 +55,6 @@ export const createHotel = async (req: Request, res: Response) => {
       amenities,
       type,
       starRating,
-      imageUrl // ✅ 新增欄位支援
     } = req.body;
 
     const hotel = new Hotel({
@@ -58,17 +64,17 @@ export const createHotel = async (req: Request, res: Response) => {
       amenities,
       type,
       starRating,
-      imageUrl // ✅ 設定圖片
+      imageUrl: req.file ? `/uploads/hotelImages/${req.file.filename}` : undefined,
     });
 
     await hotel.save();
-
     res.status(201).json({ message: 'Hotel created', hotel });
   } catch (error) {
     res.status(500).json({ message: 'Failed to create hotel', error });
   }
 };
 
+// ✅ 熱門飯店（依照評論平均分數與數量排序）
 export const getPopularHotels = async (req: Request, res: Response) => {
   try {
     const stats = await Review.aggregate([
@@ -107,6 +113,70 @@ export const getPopularHotels = async (req: Request, res: Response) => {
     res.json({ total: stats.length, hotels: stats });
   } catch (err) {
     console.error('Get popular hotels error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// ✅ 查詢單一飯店
+export const getHotelById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const hotel = await Hotel.findById(req.params.id);
+    if (!hotel) {
+      res.status(404).json({ message: 'Hotel not found' });
+      return;
+    }
+    res.json(hotel);
+  } catch (err) {
+    console.error('Get hotel error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// ✅ 更新飯店資訊
+export const updateHotel = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const {
+      name,
+      location,
+      pricePerNight,
+      starRating,
+    } = req.body;
+
+    const updateData: any = {
+      name,
+      location,
+      pricePerNight,
+      starRating,
+    };
+
+    if (req.file) {
+      updateData.imageUrl = `/uploads/hotelImages/${req.file.filename}`;
+    }
+
+    const hotel = await Hotel.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    if (!hotel) {
+      res.status(404).json({ message: 'Hotel not found' });
+      return;
+    }
+
+    res.json({ message: 'Hotel updated', hotel });
+  } catch (err) {
+    console.error('Update hotel error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// ✅ 刪除飯店
+export const deleteHotel = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const hotel = await Hotel.findByIdAndDelete(req.params.id);
+    if (!hotel) {
+      res.status(404).json({ message: 'Hotel not found' });
+      return;
+    }
+    res.json({ message: 'Hotel deleted' });
+  } catch (err) {
+    console.error('Delete hotel error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };

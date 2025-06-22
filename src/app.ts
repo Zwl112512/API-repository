@@ -3,6 +3,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+dotenv.config();
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -21,6 +22,9 @@ import favoriteRoutes from './routes/favorite.routes';
 import reviewRoutes from './routes/review.routes';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
+import authRoutes from './routes/auth.routes';
+
+
 
 
 
@@ -37,14 +41,15 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use(cors());
 app.use(express.json());
 app.use('/bookings', bookingRoutes);
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/admin', adminRoutes);
 app.use('/hotels', hotelRoutes);
-app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // 提供圖片存取
-app.use('/', uploadRoutes); // 註冊上傳 API
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/', uploadRoutes); 
 app.use('/users', userRoutes);
 app.use('/favorites', favoriteRoutes);
 app.use('/reviews', reviewRoutes);
+app.use('/auth', authRoutes);
+app.use('/admin', adminRoutes);
 
 
 // 注册
@@ -289,22 +294,21 @@ app.get('/bookings/hotel/:hotelId', verifyToken, async (req: Request, res: Respo
 
 
 
+export default app;
 
-
-// 启动服务器
-async function startServer(): Promise<void> {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI!);
-    console.log('✅ MongoDB connected');
-    app.listen(PORT, () =>
-      console.log(`🚀 Server running at http://localhost:${PORT}`)
-    );
-  } catch (err) {
-    console.error('❌ MongoDB connection failed:', err);
-    process.exit(1);
-  }
+// 👉 僅當此檔案被「直接執行」時，才啟動伺服器（for dev）
+if (require.main === module) {
+  (async () => {
+    try {
+      await mongoose.connect(process.env.MONGODB_URI!);
+      console.log('✅ MongoDB connected');
+      app.listen(PORT, () => {
+        console.log(`🚀 Server running at http://localhost:${PORT}`);
+      });
+    } catch (err) {
+      console.error('❌ MongoDB connection failed:', err);
+      process.exit(1);
+    }
+  })();
 }
 
-
-
-startServer();

@@ -4,20 +4,22 @@ info:
   version: 1.0.0
   description: RESTful API for hotel browsing, booking, and review features.
 servers:
-  - url: http://localhost:3000
-
+- url: http://localhost:3000
 paths:
   /auth/register:
     post:
       summary: Register user
-      tags: [Auth]
+      tags:
+      - Auth
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [username, password]
+              required:
+              - username
+              - password
               properties:
                 username:
                   type: string
@@ -25,24 +27,28 @@ paths:
                   type: string
                 role:
                   type: string
-                  enum: [user, admin]
+                  enum:
+                  - user
+                  - admin
       responses:
         '201':
           description: User registered
         '409':
           description: Username already taken
-
   /auth/login:
     post:
       summary: Login
-      tags: [Auth]
+      tags:
+      - Auth
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [username, password]
+              required:
+              - username
+              - password
               properties:
                 username:
                   type: string
@@ -53,32 +59,32 @@ paths:
           description: Logged in with token
         '401':
           description: Invalid credentials
-
   /hotels:
     get:
       summary: List all hotels (public)
-      tags: [Hotels]
+      tags:
+      - Hotels
       parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-        - in: query
-          name: limit
-          schema:
-            type: integer
-        - in: query
-          name: search
-          schema:
-            type: string
-        - in: query
-          name: type
-          schema:
-            type: string
-        - in: query
-          name: minStars
-          schema:
-            type: integer
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+      - in: query
+        name: type
+        schema:
+          type: string
+      - in: query
+        name: minStars
+        schema:
+          type: integer
       responses:
         '200':
           description: Hotel list with pagination
@@ -97,12 +103,12 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Hotel'
-
     post:
       summary: Add a new hotel (admin)
-      tags: [Hotels]
+      tags:
+      - Hotels
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -112,11 +118,11 @@ paths:
       responses:
         '201':
           description: Hotel created
-
   /hotels/popular:
     get:
       summary: Get most reviewed hotels
-      tags: [Hotels]
+      tags:
+      - Hotels
       responses:
         '200':
           description: Popular hotels
@@ -148,14 +154,13 @@ paths:
                     type: integer
                   avgRating:
                     type: number
-
-
   /reviews:
     post:
       summary: Add a review (user only)
-      tags: [Reviews]
+      tags:
+      - Reviews
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -165,13 +170,13 @@ paths:
       responses:
         '201':
           description: Review submitted
-
   /reviews/me/reviews:
     get:
       summary: Get current user's reviews
-      tags: [Reviews]
+      tags:
+      - Reviews
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       responses:
         '200':
           description: List of user's reviews
@@ -184,20 +189,19 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Review'
-
-
   /reviews/{id}:
     put:
       summary: Update own review
-      tags: [Reviews]
+      tags:
+      - Reviews
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
       requestBody:
         required: true
         content:
@@ -212,33 +216,33 @@ paths:
       responses:
         '200':
           description: Review updated
-
     delete:
       summary: Delete own review
-      tags: [Reviews]
+      tags:
+      - Reviews
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
       responses:
         '200':
           description: Review deleted
-
   /admin/review-stats:
     get:
       summary: Admin get review stats
-      tags: [Admin]
+      tags:
+      - Admin
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       responses:
         '200':
           description: Review statistics
           content:
-            application/json:
+            application/json: null
           schema:
             type: object
             properties:
@@ -255,44 +259,274 @@ paths:
                       type: integer
                     avgRating:
                       type: number
-
-
+  /users/me:
+    get:
+      summary: Get current user profile
+      tags:
+      - User
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+    put:
+      summary: Update current user profile
+      tags:
+      - User
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: User updated
+        '404':
+          description: User not found
+  /favorites:
+    get:
+      summary: Get all favorite hotels for the current user
+      tags:
+      - Favorites
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: List of favorite hotels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    _id:
+                      type: string
+                    hotel:
+                      type: string
+                    user:
+                      type: string
+    post:
+      summary: Add a hotel to favorites
+      tags:
+      - Favorites
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                hotelId:
+                  type: string
+              required:
+              - hotelId
+      responses:
+        '201':
+          description: Favorite added
+        '400':
+          description: Invalid request
+  /favorites/{id}:
+    delete:
+      summary: Remove a hotel from favorites
+      tags:
+      - Favorites
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Favorite removed
+        '404':
+          description: Favorite not found
+  /favorites/{hotelId}:
+    get:
+      summary: Check if a hotel is in user's favorites
+      tags:
+      - Favorites
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: hotelId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Favorite status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isFavorite:
+                    type: boolean
+  /bookings:
+    get:
+      summary: Get current user's bookings
+      tags:
+      - Bookings
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    _id:
+                      type: string
+                    hotel:
+                      type: string
+                    user:
+                      type: string
+                    checkIn:
+                      type: string
+                      format: date
+                    checkOut:
+                      type: string
+                      format: date
+                    guests:
+                      type: integer
+    post:
+      summary: Create a new booking
+      tags:
+      - Bookings
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - hotelId
+              - checkIn
+              - checkOut
+              - guests
+              properties:
+                hotelId:
+                  type: string
+                checkIn:
+                  type: string
+                  format: date
+                checkOut:
+                  type: string
+                  format: date
+                guests:
+                  type: integer
+      responses:
+        '201':
+          description: Booking created
+        '400':
+          description: Invalid booking data
+  /bookings/{id}:
+    delete:
+      summary: Cancel a booking by ID
+      tags:
+      - Bookings
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Booking cancelled
+        '403':
+          description: Unauthorized
+        '404':
+          description: Booking not found
+  /upload/avatar:
+    post:
+      summary: Upload user profile avatar
+      tags:
+      - Upload
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+              required:
+              - avatar
+      responses:
+        '200':
+          description: Avatar uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  avatarUrl:
+                    type: string
+        '400':
+          description: Invalid file
+        '401':
+          description: Unauthorized
 components:
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        avatarUrl:
+          type: string
+        role:
+          type: string
+          enum:
+          - user
+          - admin
+    UserUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+        avatarUrl:
+          type: string
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
-  schemas:
-    Hotel:
-      type: object
-      required: [name, location, pricePerNight]
-      properties:
-        name:
-          type: string
-        location:
-          type: string
-        pricePerNight:
-          type: number
-        type:
-          type: string
-        starRating:
-          type: integer
-        amenities:
-          type: array
-          items:
-            type: string
-        imageUrl:
-          type: string
-
-    Review:
-      type: object
-      required: [hotelId, rating, comment]
-      properties:
-        hotelId:
-          type: string
-        rating:
-          type: number
-        comment:
-          type: string
+security:
+- bearerAuth: []

@@ -3,6 +3,7 @@ import { createReview, getReviewsByHotel, submitReview, updateReview, deleteRevi
 import { verifyToken } from '../middleware/auth';
 
 const router = express.Router();
+router.get('/me/reviews', verifyToken, getMyReviews);
 
 // 提交評論（需要登入）
 router.post('/', verifyToken, submitReview);
@@ -13,6 +14,6 @@ router.get('/:hotelId', getReviewsByHotel);
 router.put('/:id', verifyToken, updateReview);   // 修改评论
 router.delete('/:id', verifyToken, deleteReview); // 删除评论
 
-router.get('/me/reviews', verifyToken, getMyReviews);
+
 
 export default router;

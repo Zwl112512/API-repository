@@ -40,15 +40,31 @@ export const getReviewsByHotel = async (req: Request, res: Response) => {
   try {
     const hotelId = req.params.hotelId;
     const reviews = await Review.find({ hotel: hotelId })
-      .populate('user', 'username') // 顯示評論者名稱
-      .sort({ createdAt: -1 }); // 最新評論排最前
+      .populate('user', 'username') // 拿到 user._id + username
+      .sort({ createdAt: -1 });
 
-    res.json({ reviews });
+const formatted = reviews.map((r) => {
+  const user = r.user;
+  const userId = typeof user === 'object' && '_id' in user ? user._id.toString() : '';
+  const username = typeof user === 'object' && 'username' in user ? user.username : '匿名';
+
+  return {
+    _id: r._id,
+    userId,
+    username,
+    comment: r.comment,
+    rating: r.rating,
+  };
+});
+
+
+    res.json({ reviews: formatted });
   } catch (err) {
     console.error('Get reviews error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 export const submitReview = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -188,12 +204,22 @@ export const getMyReviews = async (req: Request, res: Response): Promise<void> =
   try {
     const userId = (req as any).user.id;
     const reviews = await Review.find({ user: userId }).populate('hotel', 'name');
-    res.json({ reviews });
+
+    const formatted = reviews.map((r) => ({
+      _id: r._id,
+      hotelId: typeof r.hotel === 'object' && '_id' in r.hotel ? r.hotel._id.toString() : '',
+      hotelName: typeof r.hotel === 'object' && 'name' in r.hotel ? r.hotel.name : '未知飯店',
+      comment: r.comment,
+      rating: r.rating,
+    }));
+
+    res.json({ reviews: formatted });
   } catch (err) {
     console.error('Get my reviews error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 
 
